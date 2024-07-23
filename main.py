@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 from cryptography.fernet import Fernet
 import base64
 import hashlib
@@ -6,6 +7,14 @@ import hashlib
 window = Tk()
 window.title("Cryptology")
 window.geometry('400x700')
+
+
+def show_warning(message):
+    messagebox.showwarning("Warning", message)
+
+
+def show_info(message):
+    messagebox.showinfo("Info", message)
 
 
 def password_to_key(inputkey):
@@ -19,27 +28,57 @@ def resize_image(image, size):
 
 
 def encrypt_message(key, message):
-    fernet = Fernet(key)
-    encrypted = fernet.encrypt(message.encode())
-    if message == '':
-        print('Enter the value')
-    else:
+    try:
+        if message == '':
+            show_warning('The message is empty.')
+            return None
+
+        fernet = Fernet(key)
+        encrypted = fernet.encrypt(message.encode())
         return encrypted
+
+    except ValueError as ve:
+        show_warning(f"ValueError: {ve}")
+    except Exception as e:
+        show_warning(f"An error occurred: {e}")
 
 
 def decrypt_message(key, encrypted_message):
-    fernet = Fernet(key)
-    decrypted = fernet.decrypt(encrypted_message).decode()
-    return decrypted
+    try:
+        fernet = Fernet(key)
+        decrypted = fernet.decrypt(encrypted_message).decode()
+        return decrypted
+    except Exception as e:
+        show_warning(f"Decryption error: {e}")
+        return None
 
 
 def file_writing():
-    with open("test.txt", 'a') as f:
+    try:
         user_input = secret_textbox.get("1.0", END).strip()
         user_key = password_entry.get()
+
+        if not user_input:
+            show_warning("Please enter a message.")
+            return
+
+        if not user_key:
+            show_warning("Please enter a key.")
+            return
+
         key = password_to_key(user_key)
         encrypted_user_input = encrypt_message(key, user_input)
-        f.write(f"{title_entry.get()} : \n{encrypted_user_input.decode()}\n")
+
+        if encrypted_user_input is None:
+            return
+
+        with open("test.txt", 'a') as f:
+            f.write(f"{title_entry.get()} : \n{encrypted_user_input.decode()}\n")
+
+    except ValueError as ve:
+        show_warning(f"ValueError: {ve}")
+    except Exception as e:
+        show_warning(f"An error occurred: {e}")
 
 
 # Image
@@ -67,12 +106,28 @@ save_encrypt_button.pack(pady=20)
 
 
 def decrypt():
-    user_key = password_entry.get()
-    key = password_to_key(user_key)
-    encrypted_message = secret_textbox.get("1.0", END).strip().encode()
-    decrypted_message = decrypt_message(key, encrypted_message)
-    secret_textbox.delete("1.0", END)
-    secret_textbox.insert("1.0", decrypted_message)
+    try:
+        user_key = password_entry.get()
+
+        if not user_key:
+            show_warning("Please enter a key.")
+            return
+
+        key = password_to_key(user_key)
+        encrypted_message = secret_textbox.get("1.0", END).strip().encode()
+
+        decrypted_message = decrypt_message(key, encrypted_message)
+
+        if decrypted_message is None:
+            return
+
+        secret_textbox.delete("1.0", END)
+        secret_textbox.insert("1.0", decrypted_message)
+
+    except ValueError as ve:
+        messagebox.showerror("Error", f"ValueError: {ve}")
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
 
 
 decrypt_button = Button(text="Decrypt", font=("Arial", 10, "bold"), command=decrypt)
