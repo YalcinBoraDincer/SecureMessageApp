@@ -5,7 +5,7 @@ import hashlib
 
 window = Tk()
 window.title("Cryptology")
-window.geometry('400x600')
+window.geometry('400x700')
 
 
 def password_to_key(inputkey):
