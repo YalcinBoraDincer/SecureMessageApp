@@ -1,12 +1,17 @@
 from tkinter import *
 from cryptography.fernet import Fernet
+import base64
+import hashlib
 
 window = Tk()
 window.title("Cryptology")
-window.geometry('400x1000')
+window.geometry('400x600')
 
-key = Fernet.generate_key()
-print(f"Key: {key.decode()}")
+
+def password_to_key(inputkey):
+    digest = hashlib.sha256(inputkey.encode()).digest()
+    key = base64.urlsafe_b64encode(digest)
+    return key
 
 
 def resize_image(image, size):
@@ -16,52 +21,41 @@ def resize_image(image, size):
 def encrypt_message(key, message):
     fernet = Fernet(key)
     encrypted = fernet.encrypt(message.encode())
-    print(encrypted)
-    return encrypted
+    if message == '':
+        print('Enter the value')
+    else:
+        return encrypted
 
 
 def decrypt_message(key, encrypted_message):
     fernet = Fernet(key)
     decrypted = fernet.decrypt(encrypted_message).decode()
-    return print(decrypted)
+    return decrypted
 
 
-'''def encrypt_user_text():
-    user_input_secret = secret_textbox.get("1.0", END)
-    user_key = password_entry.get()
-    
-    encrypted_user_input = encrypt_message(key, user_input_secret)
-    return encrypted_user_input'''
 def file_writing():
     with open("test.txt", 'a') as f:
         user_input = secret_textbox.get("1.0", END).strip()
+        user_key = password_entry.get()
+        key = password_to_key(user_key)
         encrypted_user_input = encrypt_message(key, user_input)
         f.write(f"{title_entry.get()} : \n{encrypted_user_input.decode()}\n")
 
 
-
-
-
-
-
-
-
-
-#Image
+# Image
 img = PhotoImage(file='image.png')
 resized_image = resize_image(img, (100, 100))
 img_label = Label(window, image=resized_image)
 img_label.pack(pady=20)
 
-#Widgets
+# Widgets
 title_label = Label(text="Enter Your Title", font=("Arial", 12, "bold"))
 title_entry = Entry()
 secret_label = Label(text="Enter Secret", font=("Arial", 12, "bold"))
-secret_textbox = Text(width=30, height=30)
+secret_textbox = Text(width=30, height=10)
 password_label = Label(text="Enter Your Master Key", font=("Arial", 12, "bold"))
 password_entry = Entry()
-save_encrypt_button = Button(text="Save & Encrypt", font=("Arial", 10, "bold"),command=file_writing )
-decrypt_button = Button(text="Decrypt", font=("Arial", 10, "bold"),)
+save_encrypt_button = Button(text="Save & Encrypt", font=("Arial", 10, "bold"), command=file_writing)
 
 title_label.pack(pady=10)
 title_entry.pack(pady=5)
@@ -70,10 +64,18 @@ secret_textbox.pack(pady=10)
 password_label.pack(pady=10)
 password_entry.pack(pady=5)
 save_encrypt_button.pack(pady=20)
+
+
+def decrypt():
+    user_key = password_entry.get()
+    key = password_to_key(user_key)
+    encrypted_message = secret_textbox.get("1.0", END).strip().encode()
+    decrypted_message = decrypt_message(key, encrypted_message)
+    secret_textbox.delete("1.0", END)
+    secret_textbox.insert("1.0", decrypted_message)
+
+
+decrypt_button = Button(text="Decrypt", font=("Arial", 10, "bold"), command=decrypt)
 decrypt_button.pack(pady=5)
-data = encrypt_message(key, 'Bora')
-decrypt_message(key, data)
-
-
 
 window.mainloop()
